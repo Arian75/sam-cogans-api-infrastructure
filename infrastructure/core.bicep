@@ -11,7 +11,7 @@ param vnetSettings object = {
   subnets: [
     {
       name: 'subnet1'
-      addressPrefix: '10.0.0.0/20'
+      addressPrefix: '10.0.0.0/22'
     }
   ]
 }
