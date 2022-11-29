@@ -1,0 +1,66 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "prefix": {
+      "type": "string"
+    },
+    "vnetSettings": {
+      "type": "object",
+      "defaultValue": {
+        "addressPrefixes": [
+          "10.0.0.0/20"
+        ],
+        "subnets": [
+          {
+            "name": "subnet1",
+            "addressPrefix": "10.0.0.0/22"
+          }
+        ]
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-11-01",
+      "name": "[format('{0}-default-nsg', parameters('prefix'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": []
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2019-11-01",
+      "name": "[format('{0}-vnet', parameters('prefix'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "copy": [
+          {
+            "name": "subnets",
+            "count": "[length(parameters('vnetSettings').subnets)]",
+            "input": {
+              "name": "[parameters('vnetSettings').subnets[copyIndex('subnets')].name]",
+              "properties": {
+                "addressPrefix": "[parameters('vnetSettings').subnets[copyIndex('subnets')].addressPrefix]",
+                "networkSecurityGroup": {
+                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-default-nsg', parameters('prefix')))]"
+                }
+              }
+            }
+          }
+        ],
+        "addressSpace": {
+          "addressPrefixes": "[parameters('vnetSettings').addressPrefixes]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-default-nsg', parameters('prefix')))]"
+      ]
+    }
+  ]
+}
